@@ -1,0 +1,74 @@
+import pandas as pd
+from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error, r2_score
+import seaborn as sns
+import matplotlib.pyplot as plt 
+
+data = fetch_california_housing()
+X = pd.DataFrame(data.data, columns=data.feature_names)
+y= data.target
+
+X.columns 
+#########################
+print(X.describe())
+print(X.head())
+#######################
+print("Missing values:", X.isnull().sum()) 
+###################
+# Visualize EDA
+sns.distplot(y)
+plt.xlabel("Median House Value")
+plt.ylabel("Density")
+plt.title("Distribution of median house values")
+plt.show() 
+###################
+# data preprocessing
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X) 
+
+X_train,X_test,y_train,y_test=train_test_split(X_scaled,y,test_size=0.2,random_state=42) 
+
+svr = SVR(kernel='rbf')
+svr.fit(X_train, y_train) 
+########################
+y_pred = svr.predict(X_test)
+
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("Meam Squared Error:", mse)
+print("R-squared:", r2) 
+############################
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVR 
+
+# Define a parameter grid to explore
+param_grid = {
+ 'kernel': ['linear', 'rbf'], # Experiment with different kernels
+ 'C': [0.01, 0.1, 1, 10, 100], # Regularization parameter
+ 'gamma': [0.001, 0.01, 0.1, 1], # Gamma for RBF kernel (optional)
+} 
+
+# Create the GridSearchCV object
+grid_search = GridSearchCV(SVR(), param_grid, cv=5) # 5-fold cross-validation
+
+# Fit the grid search to the training data
+grid_search.fit(X_train, y_train)
+
+# Get the best model and its parameters
+best_model = grid_search.best_estimator_
+best_params = grid_search.best_params_ 
+
+# Use the best model for prediction and evaluation
+y_pred = best_model.predict(X_test) 
+
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred) 
+
+print("Mean Squared Error:", mse)
+print("R-squared:", r2)
+print("Best Hyperparameters:", best_params) 
+
